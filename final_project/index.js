@@ -11,7 +11,27 @@ app.use(express.json());
 app.use("/customer",session({secret:"fingerprint_customer",resave: true, saveUninitialized: true}))
 
 app.use("/customer/auth/*", function auth(req,res,next){
-//Write the authenication mechanism here
+    // Get the JWT token from the Authorization header
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: 'Access denied. No token provided.' });
+    }
+    
+    const token = authHeader.substring(7); // Remove 'Bearer ' prefix
+    
+    try {
+        // Verify the JWT token
+        const decoded = jwt.verify(token, 'your-secret-key'); // Replace with your actual secret key
+        
+        // Add user info to request object
+        req.user = decoded;
+        
+        // Continue to the next middleware/route
+        next();
+    } catch (error) {
+        return res.status(401).json({ message: 'Invalid token.' });
+    }
 });
  
 const PORT =5000;
